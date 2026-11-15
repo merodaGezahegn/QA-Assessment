@@ -1,0 +1,374 @@
+{
+  "info": {
+    "name": "Ella Tech E-commerce API - QA Assessment",
+    "description": "Functional, validation, error-handling and regression tests for Users, Products and Transactions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:4000"},
+    {"key": "userId", "value": "1"},
+    {"key": "productId", "value": "1"},
+    {"key": "transactionId", "value": "1"},
+    {"key": "testEmail", "value": ""},
+    {"key": "testProductName", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User - Valid",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('testEmail', 'qa.' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Response contains created user', function () {",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data).to.have.property('id');",
+                  "  pm.expect(data.email).to.eql(pm.collectionVariables.get('testEmail'));",
+                  "  pm.collectionVariables.set('userId', data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman QA User\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Create User - Duplicate Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Duplicate email returns 409 Conflict', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate User\",\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Create User - Invalid Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid email returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invalid Email User\",\n  \"email\": \"not-an-email\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response contains user array', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/users"}
+        },
+        {
+          "name": "Get User by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Returned user ID matches', function () { pm.expect(pm.response.json().data.id).to.eql(Number(pm.collectionVariables.get('userId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/users/{{userId}}"}
+        },
+        {
+          "name": "Get User - Non-numeric ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Non-numeric ID returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/users/abc"}
+        },
+        {
+          "name": "Get User - Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing user returns 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/users/999999"}
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Create Product - Valid",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('testProductName', 'QA Product ' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Product is created with correct price and quantity', function () {",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(Number(data.price)).to.eql(100);",
+                  "  pm.expect(data.quantity).to.eql(10);",
+                  "  pm.collectionVariables.set('productId', data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{testProductName}}\",\n  \"price\": 100,\n  \"quantity\": 10,\n  \"status\": \"FOR_SALE\"\n}"
+            },
+            "url": "{{baseUrl}}/products"
+          }
+        },
+        {
+          "name": "Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Products response is an array', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/products"}
+        },
+        {
+          "name": "Update Product - Check Price Preservation (DEF-003)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Update returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Price remains 100 after quantity update', function () { pm.expect(Number(pm.response.json().data.price)).to.eql(100); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{testProductName}}\",\n  \"price\": 100,\n  \"quantity\": 5,\n  \"status\": \"FOR_SALE\"\n}"
+            },
+            "url": "{{baseUrl}}/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Product ID matches', function () { pm.expect(pm.response.json().data.id).to.eql(Number(pm.collectionVariables.get('productId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/products/{{productId}}"}
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Create Transaction - Valid (Check Stock DEF-004)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Transaction returns 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Transaction quantity is 2', function () {",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data.quantity).to.eql(2);",
+                  "  pm.collectionVariables.set('transactionId', data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"productId\": {{productId}},\n  \"quantity\": 2\n}"
+            },
+            "url": "{{baseUrl}}/transactions"
+          }
+        },
+        {
+          "name": "Get Product Stock After Sale (DEF-004)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Product retrieval returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Stock decreases from 5 to 3 after selling 2', function () { pm.expect(pm.response.json().data.quantity).to.eql(3); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/products/{{productId}}"}
+        },
+        {
+          "name": "Create Transaction - Invalid Quantity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Zero quantity returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"productId\": {{productId}},\n  \"quantity\": 0\n}"
+            },
+            "url": "{{baseUrl}}/transactions"
+          }
+        },
+        {
+          "name": "Create Transaction - Missing User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing user returns 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 999999,\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
+            },
+            "url": "{{baseUrl}}/transactions"
+          }
+        },
+        {
+          "name": "Get All Transactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Transactions response is an array', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/transactions"}
+        },
+        {
+          "name": "Get Transaction by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {"method": "GET", "url": "{{baseUrl}}/transactions/{{transactionId}}"}
+        }
+      ]
+    }
+  ]
+}

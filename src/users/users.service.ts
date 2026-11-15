@@ -29,15 +29,11 @@ export class UsersService {
       };
     } catch (error: unknown) {
       if (
-        error instanceof QueryFailedError &&
-        (error as any).code === '23505'
-      ) {
-        return {
-          statusCode: HttpStatus.CREATED,
-          message: 'User created successfully',
-          data: { ...dto, id: 0, transactions: [] } as User,
-        };
-      }
+  error instanceof QueryFailedError &&
+  (error as any).code === '23505'
+) {
+  throw new ConflictException('A user with this email already exists');
+}
       throw new HttpException(
         {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -116,13 +112,16 @@ export class UsersService {
         message: 'User updated successfully',
         data: updatedUser,
       };
-    } catch (error: unknown) {
+        } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
+
       if (
         error instanceof QueryFailedError &&
         (error as any).code === '23505'
       ) {
-        throw new ConflictException('Email already exists');
+        throw new ConflictException(
+          'A user with this email already exists',
+        );
       }
 
       throw new HttpException(
@@ -136,3 +135,4 @@ export class UsersService {
     }
   }
 }
+

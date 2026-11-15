@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
+
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,15 +28,17 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<ApiResponse<User>> {
-    return this.usersService.findOne(Number(id));
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ApiResponse<User>> {
+    return this.usersService.findOne(id);
   }
 
   @Put(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: CreateUserDto,
   ): Promise<ApiResponse<User>> {
-    return this.usersService.update(Number(id), dto);
+    return this.usersService.update(id, dto);
   }
 }
